@@ -1,0 +1,5 @@
+﻿fragment Address on Address {
+    id
+    name
+    enabled
+}
