@@ -1,0 +1,12 @@
+{
+  "name": "gql-vs-bridge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "author": "",
+  "dependencies": {
+    "graphql": "^15.3.0",
+    "graphql-language-service-server": "^2.4.1"
+  }
+}

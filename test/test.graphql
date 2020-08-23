@@ -1,5 +1,6 @@
-﻿fragment Address on Address {
-    id
-    name
-    enabled
+﻿query test{
+  countries {
+    code
+    
+  }
 }
