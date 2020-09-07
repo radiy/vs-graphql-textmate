@@ -49,6 +49,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="..\node\dist\bundle.js">
+      <Link>bundle.js</Link>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Grammars\GraphQL.tmLanguage">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>

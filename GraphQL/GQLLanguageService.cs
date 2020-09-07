@@ -74,6 +74,8 @@ namespace GraphQL
 
         public override void Write(byte[] buffer, int offset, int count)
         {
+            target.Write(buffer, offset, count);
+            target.Flush();
             source.Write(buffer, offset, count);
         }
     }
@@ -84,8 +86,10 @@ namespace GraphQL
     {
 #if DEBUG
         private bool debug = true;
+        private bool useBundle = true;
 #else
         private bool debug = false;
+        private bool useBundle = true;
 #endif
         public string Name => "GraphQL Language Extension";
 
@@ -106,32 +110,32 @@ namespace GraphQL
 
             var baseDir = Path.GetDirectoryName(Path.GetDirectoryName(GetCompilePath()));
             ProcessStartInfo info = new ProcessStartInfo();
-            if (debug)
+            if (useBundle)
+            {
+                info.FileName = "node.exe";
+                info.Arguments = "\"" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "bundle.js") + "\"";
+            }
+            else
             {
                 info.FileName = "cmd.exe";
                 info.Arguments = "/c ts-node " + Path.Combine(baseDir, "node", "index.ts");
             }
-            else
-            {
-                info.FileName = "node.exe";
-                info.FileName = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "lsp.js");
+            if (debug)
                 info.CreateNoWindow = true;
-            }
             info.WorkingDirectory = Path.Combine(baseDir, "test");
             info.RedirectStandardInput = true;
             info.RedirectStandardOutput = true;
             info.UseShellExecute = false;
             var process = Process.Start(info);
-            var reader = process.StandardOutput.BaseStream;
             if (debug)
             {
                 var log = Path.Combine(baseDir, "log.txt");
                 var logStream = new FileStream(log, FileMode.Create, FileAccess.Write);
                 var initMessage = Encoding.UTF8.GetBytes($"Begin {DateTime.Now}\r\n");
                 await logStream.WriteAsync(initMessage, 0, initMessage.Length);
-                reader = new TeeStream(reader, logStream);
+                return new Connection(new TeeStream(process.StandardOutput.BaseStream, logStream), new TeeStream(process.StandardInput.BaseStream, logStream));
             }
-            return new Connection(reader, process.StandardInput.BaseStream);
+            return new Connection(process.StandardOutput.BaseStream, process.StandardInput.BaseStream);
         }
 
         public async Task OnLoadedAsync()

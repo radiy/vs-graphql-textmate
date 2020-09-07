@@ -1,6 +1,12 @@
 ﻿query test{
   countries {
     code
-    
+    states {
+        code
+    }
+    emojiU
+  }
+  languages {
+    code
   }
 }
