@@ -133,7 +133,8 @@ namespace GraphQL
                 var logStream = new FileStream(log, FileMode.Create, FileAccess.Write);
                 var initMessage = Encoding.UTF8.GetBytes($"Begin {DateTime.Now}\r\n");
                 await logStream.WriteAsync(initMessage, 0, initMessage.Length);
-                return new Connection(new TeeStream(process.StandardOutput.BaseStream, logStream), new TeeStream(process.StandardInput.BaseStream, logStream));
+                return new Connection(new TeeStream(process.StandardOutput.BaseStream, logStream),
+                    new TeeStream(process.StandardInput.BaseStream, logStream));
             }
             return new Connection(process.StandardOutput.BaseStream, process.StandardInput.BaseStream);
         }
