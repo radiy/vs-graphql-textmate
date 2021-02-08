@@ -1,6 +1,9 @@
 ﻿using Microsoft.VisualStudio.LanguageServer.Client;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.Utilities;
+using Newtonsoft.Json.Linq;
+using StreamJsonRpc;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -102,41 +105,54 @@ namespace GraphQL
         public event AsyncEventHandler<EventArgs> StartAsync;
         public event AsyncEventHandler<EventArgs> StopAsync;
 
+#if DEBUG
         public static string GetCompilePath([CallerFilePath] string path = null) => path;
+        public static string BaseDir => Path.GetDirectoryName(Path.GetDirectoryName(GetCompilePath()));
+#else
+        public static string BaseDir => null;
+#endif
+
+        public static Guid OutputPaneGuid = new Guid("2727c0ae-4ab2-4bd7-abd0-a9e6800c068a");
 
         public async Task<Connection> ActivateAsync(CancellationToken token)
         {
             await Task.Yield();
 
-            var baseDir = Path.GetDirectoryName(Path.GetDirectoryName(GetCompilePath()));
-            ProcessStartInfo info = new ProcessStartInfo();
-            if (useBundle)
+            try
             {
-                info.FileName = "node.exe";
-                info.Arguments = "\"" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "bundle.js") + "\"";
+                ProcessStartInfo info = new ProcessStartInfo();
+                if (useBundle)
+                {
+                    info.FileName = "node.exe";
+                    info.Arguments = "\"" + Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "bundle.js") + "\"";
+                }
+                else
+                {
+                    info.FileName = "cmd.exe";
+                    info.Arguments = "/c ts-node " + Path.Combine(BaseDir, "node", "index.ts");
+                }
+                if (debug)
+                    info.CreateNoWindow = true;
+                info.RedirectStandardInput = true;
+                info.RedirectStandardOutput = true;
+                info.UseShellExecute = false;
+                var process = Process.Start(info);
+                if (debug)
+                {
+                    var log = Path.Combine(BaseDir, "log.txt");
+                    var logStream = new FileStream(log, FileMode.Create, FileAccess.Write);
+                    var initMessage = Encoding.UTF8.GetBytes($"Begin {DateTime.Now}\r\n");
+                    await logStream.WriteAsync(initMessage, 0, initMessage.Length);
+                    return new Connection(new TeeStream(process.StandardOutput.BaseStream, logStream),
+                        new TeeStream(process.StandardInput.BaseStream, logStream));
+                }
+                return new Connection(process.StandardOutput.BaseStream, process.StandardInput.BaseStream);
             }
-            else
+            catch (Exception e)
             {
-                info.FileName = "cmd.exe";
-                info.Arguments = "/c ts-node " + Path.Combine(baseDir, "node", "index.ts");
+                LogError(e);
+                throw;
             }
-            if (debug)
-                info.CreateNoWindow = true;
-            info.WorkingDirectory = Path.Combine(baseDir, "test");
-            info.RedirectStandardInput = true;
-            info.RedirectStandardOutput = true;
-            info.UseShellExecute = false;
-            var process = Process.Start(info);
-            if (debug)
-            {
-                var log = Path.Combine(baseDir, "log.txt");
-                var logStream = new FileStream(log, FileMode.Create, FileAccess.Write);
-                var initMessage = Encoding.UTF8.GetBytes($"Begin {DateTime.Now}\r\n");
-                await logStream.WriteAsync(initMessage, 0, initMessage.Length);
-                return new Connection(new TeeStream(process.StandardOutput.BaseStream, logStream),
-                    new TeeStream(process.StandardInput.BaseStream, logStream));
-            }
-            return new Connection(process.StandardOutput.BaseStream, process.StandardInput.BaseStream);
         }
 
         public async Task OnLoadedAsync()
@@ -150,6 +166,28 @@ namespace GraphQL
         }
 
         public Task OnServerInitializeFailedAsync(Exception e)
+        {
+            LogError(e);
+            return Task.CompletedTask;
+        }
+
+        private void LogError(Exception e)
+        {
+            var outWindow = Microsoft.VisualStudio.Shell.Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
+
+            var windowTitle = this.Name;
+            outWindow.CreatePane(ref OutputPaneGuid, windowTitle, 1, 1);
+            outWindow.GetPane(ref OutputPaneGuid, out var customPane);
+
+            var messages = new[]
+            {
+                $"GraphQL Server initialization failed." + e
+            };
+            customPane.OutputString(String.Join(Environment.NewLine, messages));
+            customPane.Activate(); // brings the pane into view
+        }
+
+        public Task AttachForCustomMessageAsync(JsonRpc rpc)
         {
             return Task.CompletedTask;
         }

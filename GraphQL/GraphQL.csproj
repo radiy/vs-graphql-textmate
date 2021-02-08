@@ -68,6 +68,9 @@
     <PackageReference Include="Microsoft.VisualStudio.CoreUtility">
       <Version>16.6.255</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.LanguageServer.Client">
+      <Version>16.6.45</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.0.206" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VisualStudio.Text.Logic">
       <Version>16.6.255</Version>
