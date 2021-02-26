@@ -131,7 +131,7 @@ namespace GraphQL
                     info.FileName = "cmd.exe";
                     info.Arguments = "/c ts-node " + Path.Combine(BaseDir, "node", "index.ts");
                 }
-                if (debug)
+                if (!debug)
                     info.CreateNoWindow = true;
                 info.RedirectStandardInput = true;
                 info.RedirectStandardOutput = true;
