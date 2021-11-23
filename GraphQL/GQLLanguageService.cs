@@ -104,10 +104,12 @@ namespace GraphQL
 
         public event AsyncEventHandler<EventArgs> StartAsync;
         public event AsyncEventHandler<EventArgs> StopAsync;
+        public bool ShowNotificationOnInitializeFailed => true;
 
 #if DEBUG
         public static string GetCompilePath([CallerFilePath] string path = null) => path;
         public static string BaseDir => Path.GetDirectoryName(Path.GetDirectoryName(GetCompilePath()));
+
 #else
         public static string BaseDir => null;
 #endif
@@ -165,10 +167,10 @@ namespace GraphQL
             return Task.CompletedTask;
         }
 
-        public Task OnServerInitializeFailedAsync(Exception e)
+        public Task<InitializationFailureContext> OnServerInitializeFailedAsync(ILanguageClientInitializationInfo initializationState)
         {
-            LogError(e);
-            return Task.CompletedTask;
+            LogError(initializationState.InitializationException);
+            return Task.FromResult(new InitializationFailureContext { FailureMessage = initializationState.StatusMessage });
         }
 
         private void LogError(Exception e)
