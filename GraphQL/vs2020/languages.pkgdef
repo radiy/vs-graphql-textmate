@@ -1,0 +1,4 @@
+﻿; Registers the language grammar files with Visual Studio
+; Replace "TextmateSample" with a name of your choice.
+[$RootKey$\TextMate\Repositories]
+"GraphQL"="$PackageFolder$\Grammars"

@@ -2,8 +2,8 @@
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
         <Identity Id="GraphQL.962354a4-761e-4aa1-ab8d-d98ae5d25b42" Version="2.0" Language="en-US" Publisher="Roman Kvasov" />
-        <DisplayName>GraphQL textmate grammar 64-bit</DisplayName>
-        <Description xml:space="preserve">GraphQL textmate grammar</Description>
+        <DisplayName>GraphQL textmate grammar 2022</DisplayName>
+        <Description xml:space="preserve">GraphQL textmate grammar 2022</Description>
     </Metadata>
     <Installation>
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,)">
